@@ -32,7 +32,7 @@ import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
-import io.flutter.plugin.common.PluginRegistry;
+import io.flutter.plugin.common.PluginRegistry; // vẫn cần cho RequestPermissionsResultListener
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
 import io.flutter.embedding.engine.plugins.activity.ActivityAware;
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding;
@@ -50,20 +50,11 @@ public final class ImageCropPlugin implements FlutterPlugin , ActivityAware, Met
     private Result permissionRequestResult;
     private ExecutorService executor;
 
-    private ImageCropPlugin(Activity activity) {
-        this.activity = activity;
-    }
-
+    // ➜ Giữ constructor mặc định, bỏ constructor có Activity
     public ImageCropPlugin(){ }
 
-    /**
-     * legacy APIs
-     */
-    public static void registerWith(io.flutter.plugin.common.PluginRegistry.Registrar registrar) {
-        ImageCropPlugin instance = new ImageCropPlugin(registrar.activity());
-        instance.setup(registrar.messenger());
-        registrar.addRequestPermissionsResultListener(instance);
-    }
+    // ➜ BỎ HOÀN TOÀN legacy V1 registerWith(Registrar ...) để tránh lỗi 'Registrar'
+    // public static void registerWith(io.flutter.plugin.common.PluginRegistry.Registrar registrar) { ... }
 
     @Override
     public void onAttachedToEngine(@NonNull FlutterPluginBinding binding) {
@@ -105,7 +96,6 @@ public final class ImageCropPlugin implements FlutterPlugin , ActivityAware, Met
         channel = new MethodChannel(messenger, "plugins.lykhonis.com/image_crop");
         channel.setMethodCallHandler(this);
     }
-
 
     @SuppressWarnings("ConstantConditions")
     @Override
@@ -200,17 +190,6 @@ public final class ImageCropPlugin implements FlutterPlugin , ActivityAware, Met
                                         (int) (srcBitmap.getHeight() * area.bottom));
                 Rect dstRect = new Rect(0, 0, width, height);
                 canvas.drawBitmap(srcBitmap, srcRect, dstRect, paint);
-
-                // TODO: Research a way to optimize rendering via matrix to reduce memory print.
-//                Matrix transformations = new Matrix();
-//                transformations.mapRect(new RectF(0, 0,
-//                                                  options.getWidth(), options.getHeight()));
-//                transformations.postTranslate(-options.getWidth() / 2f * area.left,
-//                                              -options.getHeight() / 2f * area.top);
-//                transformations.postRotate(options.getDegrees(),
-//                                           options.getWidth() / 2f * area.width(),
-//                                           options.getHeight() / 2f * area.height());
-//                canvas.drawBitmap(srcBitmap, transformations, paint);
 
                 try {
                     final File dstFile = createTemporaryImageFile();
